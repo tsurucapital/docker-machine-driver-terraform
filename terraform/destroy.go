@@ -7,7 +7,9 @@ import (
 // Destroy invokes Terraform's "destroy" command.
 func (terraformer *Terraformer) Destroy() (success bool, err error) {
 	success, err = terraformer.RunStreamed("destroy",
-		"-force", "-input=false", // non-interactive
+		"-force",
+		"-input=false",
+		"-auto-approve",
 		"-no-color",
 		"-var-file=tfvars.json",
 	)
