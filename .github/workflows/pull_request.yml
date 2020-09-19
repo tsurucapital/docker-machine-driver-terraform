@@ -1,0 +1,23 @@
+on: [pull_request]
+name: Pull Request
+jobs:
+  test:
+    strategy:
+      matrix:
+        go: [1.15.x]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build
+        run: make build
+
+      - name: Test
+        run: make test

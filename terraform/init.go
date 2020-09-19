@@ -5,17 +5,15 @@ import (
 )
 
 // Init invokes Terraform's "init" command.
-func (terraformer *Terraformer) Init() (success bool, err error) {
-	success, err = terraformer.RunStreamed("init",
+func (terraformer *Terraformer) Init() error {
+	success, err := terraformer.RunStreamed("init",
 		"-input=false", // non-interactive
-		"-no-color",
-	)
+		"-no-color")
 	if err != nil {
-		return
+		return err
 	}
 	if !success {
-		err = errors.New("failed to execute 'terraform init'")
+		return errors.New("failed to execute 'terraform init'")
 	}
-
-	return
+	return nil
 }
