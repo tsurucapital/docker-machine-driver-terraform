@@ -45,17 +45,12 @@ If you are proposing a feature:
 
 Ready to contribute? Here's how to set up `docker-machine-driver-terraform` for local development.
 
-1. Set up your build environment:
-  * If you have Vagrant and VMWare / VirtualBox, you can run `vagrant up` to create a VM to work in.
-    * The resulting VM will have your repository folder mapped into the VM as a shared folder (so you can use your regular editor on your machine, but run build commands in the VM).
-    * Run `vagrant ssh` to connect to the VM.
-  * Otherwise:
-    1. Install Go version 1.6.x
-    2. Make sure your GOPATH environment variable has been set.
-    3. Run `go get -u github.com/krzysztof-miemiec/docker-machine-driver-terraform`.
-    4. Go to $GOPATH/src/github.com/krzysztof-miemiec/docker-machine-driver-terraform.
-2. Run `make dev` to build the provider
-3. Run `source ./use-dev-driver.sh` to make it available to execute.
+1. Install Go version 1.13.x
+2. Make sure your GOPATH environment variable has been set.
+3. Run `go get -u github.com/krzysztof-miemiec/docker-machine-driver-terraform`.
+4. Go to $GOPATH/src/github.com/krzysztof-miemiec/docker-machine-driver-terraform.
+5. Run `make dev` to build the provider
+6. Run `source ./use-dev-driver.sh` to make it available to execute.
 
 ### Make targets
 
@@ -65,7 +60,6 @@ There are a couple of make targets that you'll find useful:
 * `make dev` - builds the driver for the local machine's operating system and platform
 * `make test` - runs unit tests
 * `make build` - builds the driver for all supported operating systems and platforms
-  * `make build-windows64` - builds the driver for Windows (64-bit)
   * `make build-linux64` - builds the driver for Linux (64-bit)
   * `make build-darwin64` - builds the driver for OSX (64-bit)
 * `make dist` - builds and packages the driver for all supported operating systems and platforms

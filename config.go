@@ -39,8 +39,8 @@ func (driver *Driver) importConfig() error {
 		return err
 	}
 
-	log.Debugf("Fetching Terraform modules (if any)...")
-	err = terraformer.Get()
+	log.Debugf("Initializing Terraform configuration (if any)...")
+	err = terraformer.Init()
 	if err != nil {
 		return err
 	}

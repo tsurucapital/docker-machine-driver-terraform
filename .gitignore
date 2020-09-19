@@ -6,14 +6,10 @@
 # Folders
 _obj
 _test
-_bin
+bin
 
 # Version info
 version-info.go
-
-# Architecture specific extensions/prefixes
-*.[568vq]
-[568vq].out
 
 *.cgo1.go
 *.cgo2.c

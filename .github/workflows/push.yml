@@ -1,0 +1,58 @@
+on:
+  push:
+    tags:
+      - 'v.*'
+
+name: Release
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        go: [1.15.x]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Build distributables
+      run: make dist
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: 'Automatic release of `docker-machine-driver-terraform`'
+        draft: false
+        prerelease: false
+
+    - name: Upload Linux Binary
+      id: upload-linux-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./bin/linux-amd64.zip
+        asset_name: linux-amd64.zip
+        asset_content_type: application/zip
+
+    - name: Upload macOS Binary
+      id: upload-darwin-asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./bin/darwin-amd64.zip
+        asset_name: darwin-amd64.zip
+        asset_content_type: application/zip
