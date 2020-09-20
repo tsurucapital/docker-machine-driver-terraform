@@ -8,7 +8,9 @@ import (
 func (terraformer *Terraformer) Init() error {
 	success, err := terraformer.RunStreamed("init",
 		"-input=false", // non-interactive
-		"-no-color")
+		"-no-color",
+		terraformer.LockFlag,
+	)
 	if err != nil {
 		return err
 	}

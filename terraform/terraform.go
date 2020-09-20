@@ -19,6 +19,9 @@ type Terraformer struct {
 
 	// The directory containing the Terraform configuration
 	ConfigDir string
+
+	// Lock flag, necessary when running multiple Terraform commands at the same time
+	LockFlag string
 }
 
 // New creates a new Terraformer using the specified configuration directory.

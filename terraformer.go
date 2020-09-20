@@ -33,6 +33,10 @@ func (driver *Driver) getTerraformer() (*terraform.Terraformer, error) {
 			return nil, err
 		}
 	}
-
+	if driver.LockTimeout != "0" {
+		driver.terraformer.LockFlag = "-lock-timeout=" + driver.LockTimeout
+	} else {
+		driver.terraformer.LockFlag = "-lock=false"
+	}
 	return driver.terraformer, nil
 }

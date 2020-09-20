@@ -11,6 +11,7 @@ func (terraformer *Terraformer) Refresh() error {
 		"-input=false", // non-interactive
 		"-no-color",
 		"-var-file=tfvars.json",
+		terraformer.LockFlag,
 	)
 	log.Print(programOutput)
 	if err != nil {

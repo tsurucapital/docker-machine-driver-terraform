@@ -30,6 +30,8 @@ type Driver struct {
 	// The path of the directory containing the imported Terraform configuration.
 	ConfigDir string
 
+	LockTimeout string
+
 	// Additional variables for the Terraform configuration
 	ConfigVariables terraform.ConfigVariables
 
@@ -78,6 +80,11 @@ func (driver *Driver) GetCreateFlags() []mcnflag.Flag {
 			Usage: "Refresh the configuration after applying it",
 		},
 		mcnflag.StringFlag{
+			Name:  "terraform-lock-timeout",
+			Usage: "Terraform lock timeout. Set to \"0\" to disable locking",
+			Value: "10m",
+		},
+		mcnflag.StringFlag{
 			EnvVar: "TERRAFORM_SSH_USER",
 			Name:   "terraform-ssh-user",
 			Usage:  "The SSH username to use. Default: root",
@@ -117,6 +124,7 @@ func (driver *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 
 	driver.AdditionalVariablesInline = flags.StringSlice("terraform-variable")
 	driver.AdditionalVariablesFile = flags.String("terraform-variables-from")
+	driver.LockTimeout = flags.String("terraform-lock-timeout")
 
 	driver.RefreshAfterApply = flags.Bool("terraform-refresh")
 

@@ -12,6 +12,7 @@ func (terraformer *Terraformer) Destroy() (success bool, err error) {
 		"-auto-approve",
 		"-no-color",
 		"-var-file=tfvars.json",
+		terraformer.LockFlag,
 	)
 	if err != nil {
 		return
