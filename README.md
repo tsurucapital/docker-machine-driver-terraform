@@ -18,6 +18,7 @@ The driver accepts the following arguments:
 For example: `--terraform-variable variable1=foo --terraform-variable variable2=bar`
 * `--terraform-variables-from` (Optional) - An optional file containing the JSON that represents additional variables for the Terraform configuration
 * `--terraform-refresh` (Optional) - A flag which, if specified, will cause the driver to refresh the configuration after applying it
+* `--terraform-lifecycle-on` (Optional) - A flag which, if specified, results in performing a custom apply on start/stop instead of just destroying machine on stop.
 
 ### Terraform configuration
 
@@ -32,6 +33,7 @@ The driver can work with a Terraform configuration in any of the following forma
 It will supply the following values to the configuration as variables (in addition to any supplied via `--terraform-variables-file`):
 
 * `dm_client_ip` - The public IP of the client machine (useful for configuring firewall rules)
+* `dm_lifecycle` - Present only if `terraform-lifecycle-on` flag is present. Desired state of Docker machine: `running` (used during `create` and `start`) and `stopped` (used when `stop` or `remove` is ran); if your provider doesn't support start/stop, you can just delete a server resource using `count` parameter in Terraform.
 * `dm_machine_name` - The name of the Docker machine being created
 * `dm_ssh_user` - The SSH user name to use for authentication
 * `dm_ssh_port` - The SSH port to use

@@ -30,7 +30,11 @@ type Driver struct {
 	// The path of the directory containing the imported Terraform configuration.
 	ConfigDir string
 
+	// Lock timeout (in time units like 30s, 1m or 2h)
 	LockTimeout string
+
+	// Whether to pass dm_lifecycle variable and perform a custom apply on start/stop
+	LifecycleOn bool
 
 	// Additional variables for the Terraform configuration
 	ConfigVariables terraform.ConfigVariables
@@ -79,7 +83,12 @@ func (driver *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:  "terraform-refresh",
 			Usage: "Refresh the configuration after applying it",
 		},
+		mcnflag.BoolFlag{
+			Name:  "terraform-lifecycle-on",
+			Usage: "Enable full docker-machine lifecycle; otherwise stop means destroy and start means create",
+		},
 		mcnflag.StringFlag{
+			EnvVar: "TERRAFORM_LOCK_TIMEOUT",
 			Name:  "terraform-lock-timeout",
 			Usage: "Terraform lock timeout. Set to \"0\" to disable locking",
 			Value: "10m",
@@ -125,6 +134,7 @@ func (driver *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	driver.AdditionalVariablesInline = flags.StringSlice("terraform-variable")
 	driver.AdditionalVariablesFile = flags.String("terraform-variables-from")
 	driver.LockTimeout = flags.String("terraform-lock-timeout")
+	driver.LifecycleOn = flags.Bool("terraform-lifecycle-on")
 
 	driver.RefreshAfterApply = flags.Bool("terraform-refresh")
 
@@ -194,13 +204,9 @@ func (driver *Driver) PreCreateCheck() error {
 	driver.ConfigVariables["dm_ssh_public_key_file"] = driver.SSHKeyPath + ".pub"
 	driver.ConfigVariables["dm_ssh_user"] = driver.SSHUser
 	driver.ConfigVariables["dm_ssh_port"] = driver.SSHPort
+	driver.ConfigVariables["dm_lifecycle"] = "running"
 
 	err = driver.readAdditionalVariables()
-	if err != nil {
-		return err
-	}
-
-	err = driver.writeVariables()
 	if err != nil {
 		return err
 	}
@@ -208,42 +214,48 @@ func (driver *Driver) PreCreateCheck() error {
 	return nil
 }
 
-// Create a new Docker Machine instance on CloudControl.
-func (driver *Driver) Create() error {
+func (driver *Driver) Apply() (outputs terraform.Outputs, err error) {
+	err = driver.writeVariables()
+	if err != nil {
+		return
+	}
 	log.Infof("Applying Terraform configuration...")
 
 	terraformer, err := driver.getTerraformer()
 	if err != nil {
-		return err
+		return
 	}
 
 	success, err := terraformer.Apply()
 	if err != nil {
-		return err
+		return
 	}
 	if !success {
-		return errors.New("Failed to apply Terraform configuration")
+		err = errors.New("Failed to apply Terraform configuration")
+		return
 	}
 
 	if driver.RefreshAfterApply {
 		log.Infof("Refreshing Terraform configuration state...")
 		err = terraformer.Refresh()
 		if err != nil {
-			return err
+			return
 		}
 	}
 
-	outputs, err := terraformer.Output()
+	outputs, err = terraformer.Output()
 	if err != nil {
-		return err
+		return
 	}
 	if !success {
-		return fmt.Errorf("Failed to obtain Terraform outputs")
+		err = fmt.Errorf("Failed to obtain Terraform outputs")
+		return
 	}
 
 	output, ok := outputs["dm_machine_ip"]
 	if !ok {
-		return fmt.Errorf("Configuration does not declare required output 'dm_machine_ip'")
+		err = fmt.Errorf("Configuration does not declare required output 'dm_machine_ip'")
+		return
 	}
 	driver.IPAddress = output.Value.(string)
 
@@ -252,8 +264,16 @@ func (driver *Driver) Create() error {
 		driver.SSHUser = output.Value.(string)
 	}
 
-	log.Infof("Deployed host has IP '%s'.", driver.IPAddress)
-	log.Infof("Deployed host has SSH user '%s'.", driver.SSHUser)
+	log.Infof("created host: ip = %s, user %s", driver.IPAddress, driver.SSHUser)
+	return
+}
+
+// Create a new Docker Machine instance.
+func (driver *Driver) Create() error {
+	_, err := driver.Apply()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -276,6 +296,12 @@ func (driver *Driver) GetURL() (string, error) {
 
 // Remove deletes the target machine.
 func (driver *Driver) Remove() error {
+	driver.ConfigVariables["dm_lifecycle"] = "stopped"
+	err := driver.writeVariables()
+	if err != nil {
+		return err
+	}
+
 	log.Infof("Destroying terraform configuration...")
 
 	terraformer, err := driver.getTerraformer()
@@ -296,12 +322,14 @@ func (driver *Driver) Remove() error {
 
 // Start the target machine.
 func (driver *Driver) Start() error {
-	return errors.New("The Terraform driver does not support Start.")
+	return driver.Create()
 }
 
 // Stop the target machine (gracefully).
 func (driver *Driver) Stop() error {
-	return errors.New("The Terraform driver does not support Stop.")
+	driver.ConfigVariables["dm_lifecycle"] = "stopped"
+	_, err := driver.Apply()
+	return err
 }
 
 // Restart the target machine.
@@ -315,7 +343,8 @@ func (driver *Driver) Restart() error {
 
 // Kill the target machine (hard shutdown).
 func (driver *Driver) Kill() error {
-	return errors.New("The Terraform driver does not support Kill.")
+	// It's the same as destroy.
+	return driver.Remove()
 }
 
 // GetSSHHostname returns the hostname for SSH
