@@ -204,7 +204,10 @@ func (driver *Driver) PreCreateCheck() error {
 	driver.ConfigVariables["dm_ssh_public_key_file"] = driver.SSHKeyPath + ".pub"
 	driver.ConfigVariables["dm_ssh_user"] = driver.SSHUser
 	driver.ConfigVariables["dm_ssh_port"] = driver.SSHPort
-	driver.ConfigVariables["dm_lifecycle"] = "running"
+
+	if driver.LifecycleOn {
+		driver.ConfigVariables["dm_lifecycle"] = "running"
+	}
 
 	err = driver.readAdditionalVariables()
 	if err != nil {
@@ -296,7 +299,9 @@ func (driver *Driver) GetURL() (string, error) {
 
 // Remove deletes the target machine.
 func (driver *Driver) Remove() error {
-	driver.ConfigVariables["dm_lifecycle"] = "stopped"
+	if driver.LifecycleOn {
+		driver.ConfigVariables["dm_lifecycle"] = "stopped"
+	}
 	err := driver.writeVariables()
 	if err != nil {
 		return err
@@ -327,9 +332,13 @@ func (driver *Driver) Start() error {
 
 // Stop the target machine (gracefully).
 func (driver *Driver) Stop() error {
-	driver.ConfigVariables["dm_lifecycle"] = "stopped"
-	_, err := driver.Apply()
-	return err
+	if driver.LifecycleOn {
+		driver.ConfigVariables["dm_lifecycle"] = "stopped"
+		_, err := driver.Apply()
+		return err
+	} else{
+		return driver.Remove()
+	}
 }
 
 // Restart the target machine.
