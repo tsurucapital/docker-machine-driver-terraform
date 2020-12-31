@@ -37,4 +37,7 @@ version: $(VERSION_INFO_FILE)
 
 $(VERSION_INFO_FILE): Makefile
 	@echo "Update version info: `git describe --tags`."
-	@echo "package main\n\n// DriverVersion is the current version of the Terraform driver for Docker Machine.\nconst DriverVersion = \"`git describe --tags` (`git rev-parse HEAD`)\"" > $(VERSION_INFO_FILE)
+	@echo "package main" > $(VERSION_INFO_FILE)
+	@echo "" >> $(VERSION_INFO_FILE)
+	@echo "// DriverVersion is the current version of the Terraform driver for Docker Machine." >> $(VERSION_INFO_FILE)
+	@echo "const DriverVersion = \"`git describe --tags` (`git rev-parse HEAD`)\"" >> $(VERSION_INFO_FILE)
